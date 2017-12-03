@@ -218,7 +218,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     try{
       gsatts = new GetterSetterMethodAttributes(method);
     } catch (IllegalArgumentException e){
-      return true;
+      return false;
     }
     List<ExclusionStrategy> list = serialize ? serializationStrategies : deserializationStrategies;
     if (!list.isEmpty()) {
