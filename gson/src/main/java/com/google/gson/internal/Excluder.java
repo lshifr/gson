@@ -16,11 +16,7 @@
 
 package com.google.gson.internal;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.Since;
 import com.google.gson.annotations.Until;
@@ -29,6 +25,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -209,6 +206,28 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       }
     }
 
+    return false;
+  }
+
+  public boolean excludeGetterOrSetter(Method method, boolean serialize){
+    if (version != Excluder.IGNORE_VERSIONS
+            && !isValidVersion(method.getAnnotation(Since.class), method.getAnnotation(Until.class))) {
+      return true;
+    }
+    GetterSetterMethodAttributes gsatts;
+    try{
+      gsatts = new GetterSetterMethodAttributes(method);
+    } catch (IllegalArgumentException e){
+      return true;
+    }
+    List<ExclusionStrategy> list = serialize ? serializationStrategies : deserializationStrategies;
+    if (!list.isEmpty()) {
+      for (ExclusionStrategy exclusionStrategy : list) {
+        if (exclusionStrategy.shouldSkipGetterSetter(gsatts)){
+          return true;
+        }
+      }
+    }
     return false;
   }
 
