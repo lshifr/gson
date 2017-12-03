@@ -106,4 +106,10 @@ public interface ExclusionStrategy {
    * @return true if the class should be ignored; otherwise false
    */
   public boolean shouldSkipClass(Class<?> clazz);
+
+
+  public default boolean shouldSkipGetterSetter(GetterSetterMethodAttributes atts){
+    return true;
+  }
+
 }
