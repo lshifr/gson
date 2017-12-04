@@ -93,15 +93,37 @@ public final class GetterSetterMethodAttributes {
             return isSetter(method.getName());
         }
 
+        public static boolean classHasPublicField(Class<?> cls, String fieldName){
+            return classHasField(cls, fieldName, true);
+        }
+
         public static boolean classHasField(Class<?> cls, String fieldName){
+            return classHasField(cls, fieldName, false);
+        }
+
+        public static boolean classHasField(Class<?> cls, String fieldName, boolean publicOnly){
             try{
-                cls.getField(fieldName);
+                if(publicOnly){
+                    cls.getField(fieldName);
+                } else {
+                    cls.getDeclaredField(fieldName);
+                }
                 return true;
             } catch (NoSuchFieldException e) {
                 return false;
             } catch (SecurityException e) {
                 return false;
             }
+        }
+
+        public static boolean classOrParentHasField(Class<?> cls, String fieldName){
+            if(cls == null){
+                return false;
+            }
+            if(classHasField(cls, fieldName, false)){
+                return true;
+            }
+            return classHasField(cls.getSuperclass(), fieldName);
         }
 
         public static boolean fieldHasGetter(Field field) {
@@ -163,7 +185,7 @@ public final class GetterSetterMethodAttributes {
             List<Method> vms = new ArrayList<>();
             for (Method m: methods){
                 Class<?> cls = m.getDeclaringClass();
-                if(!classHasField(cls, fieldNameFromGetterOrSetter(m))){
+                if(!classOrParentHasField(cls, fieldNameFromGetterOrSetter(m))){
                     vms.add(m);
                 }
             }
