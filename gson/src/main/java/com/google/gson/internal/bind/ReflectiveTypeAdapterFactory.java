@@ -137,23 +137,23 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
                     throw new IllegalArgumentException(declaredType
                             + " declares multiple JSON fields named " + previous.name);
                 }
-                // Serialization of "virtual" fields, defined by getters only
-                // TODO: support deserialization
-                if (context.useGetterSetter()) {
-                    Method[] getters = GetterSetterMethodAttributes.GetterSetterReflectionHelper.filterVirtualFieldMethods(
-                            GetterSetterMethodAttributes.GetterSetterReflectionHelper.getAllGetters(raw, true)
-                    );
-                    for (Method getter : getters) {
-                        serialize = includeGetterOrSetter(getter, true);
-                        deserialize = includeGetterOrSetter(getter, false);
-                        if (!serialize && !deserialize) {
-                            continue;
-                        }
-                        GetterSetterSerializedVirtualField wrapped = new GetterSetterSerializedVirtualField(
-                            getter, context
-                        );
-                        result.put(wrapped.name, wrapped.createBoundField(serialize, deserialize));
+            }
+            // Serialization of "virtual" fields, defined by getters only
+            // TODO: support deserialization
+            if (context.useGetterSetter()) {
+                Method[] getters = GetterSetterMethodAttributes.GetterSetterReflectionHelper.filterVirtualFieldMethods(
+                        GetterSetterMethodAttributes.GetterSetterReflectionHelper.getAllGetters(raw, true)
+                );
+                for (Method getter : getters) {
+                    boolean serialize = includeGetterOrSetter(getter, true);
+                    boolean deserialize = includeGetterOrSetter(getter, false);
+                    if (!serialize && !deserialize) {
+                        continue;
                     }
+                    GetterSetterSerializedVirtualField wrapped = new GetterSetterSerializedVirtualField(
+                            getter, context
+                    );
+                    result.put(wrapped.name, wrapped.createBoundField(serialize, deserialize));
                 }
             }
             type = TypeToken.get($Gson$Types.resolve(type.getType(), raw, raw.getGenericSuperclass()));
@@ -305,6 +305,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
         GetterSetterSerializedVirtualField(Method method, Gson context) {
             this(GetterSetterMethodAttributes.GetterSetterReflectionHelper.fieldNameFromGetterOrSetter(method),
+                    //TODO: use $Gson$Types.resolve() here, like in getBoundFields main loop - or refactor to
+                    //TODO: pass it explicitly
                     new GetterSetterMethodAttributes(method).getDeclaredVirtualFieldType(), context);
             $Gson$Preconditions.checkArgument( // Only support getters for now
                     GetterSetterMethodAttributes.GetterSetterReflectionHelper.isGetter(method)
